@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adicionar Desenho</title>
+  <link rel="stylesheet" href="src/styles/style.css">
+</head>
+<body>
+  <main class="upload-page-container">
+    <div class="upload-card">
+      <h2>Publicar Novo Desenho</h2>
+      <p>Selecione uma imagem do seu celular para adicionar à galeria.</p>
+
+      <form id="form-upload" class="upload-form">
+        <div class="file-drop-area">
+          <input type="file" id="input-foto" name="imagem" accept="image/*" required>
+          <label for="input-foto" class="file-label">Escolher Foto</label>
+        </div>
+
+        <input type="text" id="titulo" name="titulo" class="upload-input" placeholder="Título do desenho" maxlength="80">
+        <label class="filter-label" for="data">Data do desenho</label>
+        <input type="date" id="data" name="data" class="upload-input" aria-label="Data do desenho">
+        <textarea id="descricao" name="descricao" class="upload-input upload-textarea" placeholder="Descrição opcional"></textarea>
+
+        <button type="submit" id="btn-enviar" class="btn-primary">Enviar Arte</button>
+      </form>
+
+      <p id="status-upload" class="status-text"></p>
+    </div>
+  </main>
+
+  <script src="src/scripts/scriptUpload.js"></script>
+</body>
+</html>

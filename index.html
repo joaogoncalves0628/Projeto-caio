@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto Caio</title>
+    <link rel="stylesheet" href="src/styles/style.css">
+</head>
+<body>
+
+    <h3 id="Card-boasVindas"> ♡ Projeto em conjunto do melhor casal rsrs</h3>
+
+    <div id="foto-modal" class="modal">
+  <div class="modal-content">
+    
+    <button id="fechar-modal" class="modal-close" aria-label="Fechar modal">&times;</button>
+    
+    <div class="modal-media">
+      <button id="fullscreen-btn" class="fullscreen-btn" aria-label="Ver em tela cheia">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+      </button>
+      <img id="modal-img" src="" alt="Desenho Ampliado">
+    </div>
+    
+    <div class="modal-info">
+      <h2 id="modal-titulo">Título do Desenho</h2>
+      <p id="modal-descricao">Carregando descrição...</p>
+      
+      <button id="btn-excluir-desenho" class="delete-btn" aria-label="Excluir este desenho">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        Excluir Desenho
+      </button>
+
+      <div class="modal-meta">
+        <span id="modal-data">Postado em: --/--/----</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+    <main id="pages">
+        <section class="page active" id="page-home">
+            <div class="filter-panel hidden" id="filter-panel" aria-hidden="true">
+                <h2>Ordenar por data</h2>
+                <p>Escolha a ordem em que os desenhos aparecem.</p>
+
+                <div class="filter-controls">
+                    <div class="filter-row">
+                        <label class="filter-label" for="filter-order">Ordem</label>
+                        <select id="filter-order" class="filter-input" aria-label="Ordem dos desenhos">
+                            <option value="newest">Mais recentes primeiro</option>
+                            <option value="oldest">Mais antigas primeiro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="gallery-container" id="galeria-fotos"></div>
+        </section>
+
+        <section class="page" id="page-likes">
+            <div class="page-panel">
+                <h2>Curtidas</h2>
+                <p>Veja os desenhos que você marcou como favoritos.</p>
+            </div>
+            <div class="gallery-container likes-gallery" id="galeria-curtidas"></div>
+        </section>
+
+        <section class="page" id="page-add">
+            <div class="page-panel">
+                <h2>Adicionar novo desenho</h2>
+                <p>Envie uma imagem para o backend da galeria e ela aparecerá automaticamente na página inicial.</p>
+
+                <form id="form-upload-inline" class="upload-form">
+                    <div class="file-drop-area">
+                        <input type="file" id="input-foto-inline" name="imagem" accept="image/*" required>
+                        <label for="input-foto-inline" class="file-label">Escolher imagem</label>
+                        <div id="preview-container-inline" class="preview-container hidden" aria-live="polite">
+                            <img id="preview-img-inline" class="preview-img" alt="Pré-visualização da imagem selecionada">
+                            <p id="preview-name-inline" class="preview-name"></p>
+                        </div>
+                    </div>
+
+                    <input type="text" id="titulo-inline" name="titulo" class="upload-input" placeholder="Título do desenho" maxlength="80">
+                    <input type="date" id="data-inline" name="data" class="upload-input" aria-label="Data do desenho" required>
+                    <textarea id="descricao-inline" name="descricao" class="upload-input upload-textarea" placeholder="Descrição opcional"></textarea>
+
+                    <button type="submit" class="btn-primary">Enviar desenho</button>
+                    <p id="status-upload-inline" class="status-text"></p>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <div class="floating-nav-wrapper">
+        <nav class="floating-nav">
+            <button class="nav-button active" data-page="home" aria-label="Home"> 
+                <span class="nav-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon-svg nav-icon-outline jx0p4r" viewBox="0 0 24 24">
+                        <path class="e2ibnw" />
+                        <path class="prfvjk" />
+                    </svg>
+                    <span class="nav-icon-fill solar--home-2-bold"></span>
+                </span>
+            </button>
+
+            <button class="nav-button" data-action="filter" aria-label="Filtro">
+                <span class="nav-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon-svg nav-icon-outline" viewBox="0 0 24 24">
+                        <path class="vajkra" />
+                    </svg>
+                    <span class="nav-icon-fill solar--filter-bold"></span>
+                </span>
+            </button>
+
+            <button class="nav-button" data-page="likes" aria-label="Curtidas">
+                <span class="nav-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon-svg nav-icon-outline" viewBox="0 0 24 24">
+                        <path class="n8r82r" />
+                    </svg>
+                    <span class="nav-icon-fill solar--heart-bold"></span>
+                </span>
+            </button>
+        </nav>
+
+        <nav id="Add-button">
+            <button class="nav-button" type="button" aria-label="Adicionar" id="btn-adicionar" data-page="add">
+                <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon-svg" viewBox="0 0 24 24">
+                    <path class="v4l00m" />
+                </svg>
+            </button>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/scripts/script.js"></script>
+</body>
+</html>
