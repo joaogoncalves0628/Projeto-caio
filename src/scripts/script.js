@@ -176,18 +176,25 @@ function renderizarGaleria(container, desenhos) {
     const item = document.createElement('div');
     item.classList.add('gallery-item');
 
+    // Imagem do desenho
     const img = document.createElement('img');
     img.src = desenho.image_url;
     img.loading = 'lazy';
     img.alt = desenho.titulo || 'Desenho';
 
+    // 🌟 NOVO: Elemento do título que aparece embaixo do desenho
+    const tituloLegenda = document.createElement('p');
+    tituloLegenda.classList.add('gallery-item-title');
+    tituloLegenda.innerText = desenho.titulo || 'Sem título';
+
+    // Botão de curtir
     const likeButton = document.createElement('button');
     likeButton.type = 'button';
     likeButton.className = `like-btn${estaCurtida(desenho.id) ? ' active' : ''}`;
     likeButton.innerHTML = estaCurtida(desenho.id) ? '♥' : '♡';
     likeButton.setAttribute('aria-label', estaCurtida(desenho.id) ? 'Remover curtida' : 'Curtir desenho');
     
-    // Configura o evento de clique do Like com animação de Pop / Unpop
+    // Configura o clique do Like
     likeButton.addEventListener('click', event => {
       event.stopPropagation();
       
@@ -213,36 +220,33 @@ function renderizarGaleria(container, desenhos) {
       alternarCurtidaSilenciosa(desenho.id);
     });
 
-    // Evento para abrir o Modal de detalhes ao clicar na imagem
+    // Evento para abrir o Modal
     item.addEventListener('click', () => {
-  // Capturando todos os novos elementos do modal
-  const modalTitulo = document.getElementById('modal-titulo');
-  const modalDescricao = document.getElementById('modal-descricao');
-  
-  if (modalImg) modalImg.src = desenho.image_url;
-  
-  // Atualiza o Título do modal
-  if (modalTitulo) {
-    modalTitulo.innerText = desenho.titulo || 'Desenho sem título';
-  }
+      desenhoAtivoNoModal = desenho; 
+      
+      if (modalImg) modalImg.src = desenho.image_url;
+      
+      if (modalTitulo) {
+        modalTitulo.innerText = desenho.titulo || 'Desenho sem título';
+      }
+      
+      if (modalDescricao) {
+        modalDescricao.innerText = desenho.descricao || 'Sem descrição disponível.';
+      }
+      
+      if (modalData) {
+        const dataFormatada = desenho.created_at
+          ? new Date(desenho.created_at).toLocaleDateString('pt-BR')
+          : '--/--/----';
+        modalData.innerText = `Postado em: ${dataFormatada}`;
+      }
+      
+      if (modal) modal.classList.add('open');
+    });
 
-  // Atualiza a Descrição do modal
-  if (modalDescricao) {
-    modalDescricao.innerText = desenho.descricao || 'Sem descrição disponível.';
-  }
-
-  // Atualiza a Data formatada
-  if (modalData) {
-    const dataFormatada = desenho.created_at
-      ? new Date(desenho.created_at).toLocaleDateString('pt-BR')
-      : '--/--/----';
-    modalData.innerText = `Postado em: ${dataFormatada}`;
-  }
-  
-  if (modal) modal.classList.add('open');
-});
-
+    // Adiciona os elementos em ordem na div do item
     item.appendChild(img);
+    item.appendChild(tituloLegenda); // 🌟 Adicionado aqui embaixo da foto
     item.appendChild(likeButton);
     container.appendChild(item);
   });
