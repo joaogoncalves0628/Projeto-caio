@@ -16,45 +16,7 @@ let desenhosCarregados = [];
 let likedIds = carregarCurtidas();
 let previewUrlAtual = null;
 let desenhoAtivoNoModal = null; // Guarda o desenho que está aberto no momento
-
-const fileInput = document.getElementById('seu-input-de-arquivo');
-
-fileInput.addEventListener('change', async (e) => {
-  let file = e.target.files[0];
-  if (!file) return;
-
-  // Verifica se a extensão é HEIC
-  if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
-    console.log("Detectado arquivo HEIC. Convertendo para JPEG...");
-    
-    try {
-      // Exibe um aviso visual para o usuário saber que está convertendo
-      const statusText = document.getElementById('status-upload'); // Ajuste com o seu ID de status
-      if (statusText) statusText.innerText = "Convertendo imagem HEIC...";
-
-      // Faz a mágica da conversão
-      const blobConvertido = await heic2any({
-        blob: file,
-        toType: "image/jpeg",
-        quality: 0.8 // 80% de qualidade para o arquivo não ficar gigante
-      });
-
-      // Cria um novo arquivo baseado no blob convertido
-      const novoNome = file.name.replace(/\.[^/.]+$/, "") + ".jpeg";
-      file = new File([blobConvertido], novoNome, { type: "image/jpeg" });
-      
-      console.log("Conversão concluída com sucesso!");
-    } catch (error) {
-      console.error("Erro ao converter HEIC:", error);
-      alert("Não foi possível processar esta imagem HEIC. Tente usar PNG ou JPEG.");
-      return;
-    }
-  }
-
-  // A partir daqui, o seu código continua exatamente igual!
-  // A variável 'file' agora já é um JPEG prontinho para o preview e upload.
-  mostrarPreview(file); 
-});
+let arquivoSelecionado = null;  // Guarda o arquivo final (convertido ou original) para upload
 
 // ==========================================================================
 // 2. SISTEMA DE CURTIDAS (LOCALSTORAGE + BANCO)
@@ -100,7 +62,6 @@ async function atualizarLikeNoBanco(id, incremental) {
   }
 }
 
-// Atualiza os dados de curtidas em segundo plano sem recriar os elementos HTML na tela (mantém a animação lisa)
 function alternarCurtidaSilenciosa(id) {
   const idString = String(id);
   const jaCurtido = likedIds.includes(idString);
@@ -153,7 +114,6 @@ function showPage(pageId) {
 
   if (pageId === 'page-likes') renderizarCurtidas();
 
-  // Guarda a última página visitada para não resetar no F5
   localStorage.setItem('ultima-pagina-caio', pageId);
 }
 
@@ -179,7 +139,7 @@ function toggleFilterPanel(button) {
 }
 
 // ==========================================================================
-// 4. FILTROS E PREVIEW
+// 4. FILTROS, PREVIEW E SELEÇÃO DE ARQUIVOS
 // ==========================================================================
 function aplicarFiltro() {
   const container = document.getElementById('galeria-fotos');
@@ -215,28 +175,23 @@ function renderizarGaleria(container, desenhos) {
     const item = document.createElement('div');
     item.classList.add('gallery-item');
 
-    // Imagem do desenho
     const img = document.createElement('img');
     img.src = desenho.image_url;
     img.loading = 'lazy';
     img.alt = desenho.titulo || 'Desenho';
 
-    // 🌟 NOVO: Elemento do título que aparece embaixo do desenho
     const tituloLegenda = document.createElement('p');
     tituloLegenda.classList.add('gallery-item-title');
     tituloLegenda.innerText = desenho.titulo || 'Sem título';
 
-    // Botão de curtir
     const likeButton = document.createElement('button');
     likeButton.type = 'button';
     likeButton.className = `like-btn${estaCurtida(desenho.id) ? ' active' : ''}`;
     likeButton.innerHTML = estaCurtida(desenho.id) ? '♥' : '♡';
     likeButton.setAttribute('aria-label', estaCurtida(desenho.id) ? 'Remover curtida' : 'Curtir desenho');
     
-    // Configura o clique do Like
     likeButton.addEventListener('click', event => {
       event.stopPropagation();
-      
       const jaCurtido = estaCurtida(desenho.id);
       likeButton.classList.remove('pop-animation', 'unpop-animation');
       
@@ -259,33 +214,22 @@ function renderizarGaleria(container, desenhos) {
       alternarCurtidaSilenciosa(desenho.id);
     });
 
-    // Evento para abrir o Modal
     item.addEventListener('click', () => {
       desenhoAtivoNoModal = desenho; 
-      
       if (modalImg) modalImg.src = desenho.image_url;
-      
-      if (modalTitulo) {
-        modalTitulo.innerText = desenho.titulo || 'Desenho sem título';
-      }
-      
-      if (modalDescricao) {
-        modalDescricao.innerText = desenho.descricao || 'Sem descrição disponível.';
-      }
-      
+      if (modalTitulo) modalTitulo.innerText = desenho.titulo || 'Desenho sem título';
+      if (modalDescricao) modalDescricao.innerText = desenho.descricao || 'Sem descrição disponível.';
       if (modalData) {
         const dataFormatada = desenho.created_at
           ? new Date(desenho.created_at).toLocaleDateString('pt-BR')
           : '--/--/----';
         modalData.innerText = `Postado em: ${dataFormatada}`;
       }
-      
       if (modal) modal.classList.add('open');
     });
 
-    // Adiciona os elementos em ordem na div do item
     item.appendChild(img);
-    item.appendChild(tituloLegenda); // 🌟 Adicionado aqui embaixo da foto
+    item.appendChild(tituloLegenda);
     item.appendChild(likeButton);
     container.appendChild(item);
   });
@@ -315,6 +259,7 @@ function limparPreviewImagem() {
     previewUrlAtual = null;
   }
 
+  arquivoSelecionado = null;
   if (previewImg) previewImg.removeAttribute('src');
   if (previewName) previewName.textContent = '';
   if (previewContainer) previewContainer.classList.add('hidden');
@@ -344,6 +289,44 @@ function atualizarPreviewImagem(arquivo, statusElement) {
   if (statusElement) statusElement.textContent = `Imagem selecionada: ${arquivo.name}`;
 }
 
+// Escuta a seleção do arquivo, trata HEIC e gera o Preview
+async function gerenciarSelecaoDeArquivo(event) {
+  const fileInput = event.target;
+  const statusUpload = document.getElementById('status-upload-inline');
+  let file = fileInput.files?.[0];
+
+  if (!file) {
+    limparPreviewImagem();
+    return;
+  }
+
+  // Se for HEIC/HEIF, roda o conversor
+  if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
+    if (statusUpload) statusUpload.textContent = 'Convertendo imagem HEIC... Por favor, aguarde.';
+    try {
+      // heic2any precisa estar importado no HTML
+      const blobConvertido = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.8
+      });
+
+      const novoNome = file.name.replace(/\.[^/.]+$/, "") + ".jpeg";
+      file = new File([blobConvertido], novoNome, { type: "image/jpeg" });
+    } catch (error) {
+      console.error("Erro ao converter HEIC:", error);
+      alert("Não foi possível processar esta imagem HEIC. Tente usar PNG ou JPEG.");
+      limparPreviewImagem();
+      fileInput.value = "";
+      return;
+    }
+  }
+
+  // Guarda o arquivo final na variável global e atualiza o preview
+  arquivoSelecionado = file;
+  atualizarPreviewImagem(file, statusUpload);
+}
+
 // Ouvintes para a barra de navegação
 navButtons.forEach(button => {
   button.addEventListener('click', () => {
@@ -368,7 +351,7 @@ navButtons.forEach(button => {
 });
 
 // ==========================================================================
-// 5. OPERAÇÕES SUPABASE (BUSCAR E ENVIAR)
+// 5. OPERAÇÕES SUPABASE (BUSCAR, ENVIAR E EXCLUIR)
 // ==========================================================================
 async function carregarGaleria() {
   const container = document.getElementById('galeria-fotos');
@@ -388,7 +371,7 @@ async function carregarGaleria() {
       image_url: item.url_imagem, 
       created_at: item.criado_em,  
       titulo: item.titulo || 'Desenho',
-      descricao: item.descricao || '' // Mapeia a coluna de descrição do banco
+      descricao: item.descricao || ''
     }));
 
     aplicarFiltro();
@@ -404,16 +387,15 @@ async function enviarDesenho(event) {
 
   const form = document.getElementById('form-upload-inline');
   const status = document.getElementById('status-upload-inline');
-  const fileInput = document.getElementById('input-foto-inline');
   
-  // Capturando as entradas opcionais de dados do seu formulário HTML
   const tituloInput = document.getElementById('titulo-inline');
   const descInput = document.getElementById('descricao-inline');
   const dataInput = document.getElementById('data-inline');
 
-  if (!form || !status || !fileInput) return;
+  if (!form || !status) return;
 
-  const arquivo = fileInput.files[0];
+  // Usa o arquivo selecionado previamente tratado (HEIC convertido ou padrão)
+  const arquivo = arquivoSelecionado;
   if (!arquivo) {
     status.textContent = 'Seleciona uma imagem primeiro.';
     return;
@@ -423,7 +405,6 @@ async function enviarDesenho(event) {
   status.classList.remove('status-success', 'status-error');
 
   try {
-    // 1. Envia o arquivo para o Bucket do Storage
     const nomeArquivo = `${Date.now()}_${arquivo.name}`;
     const { data: storageData, error: storageError } = await supabaseClient
       .storage
@@ -432,7 +413,6 @@ async function enviarDesenho(event) {
 
     if (storageError) throw storageError;
 
-    // 2. Pega o link público da imagem guardada
     const { data: urlData } = supabaseClient
       .storage
       .from('desenhos')
@@ -440,12 +420,10 @@ async function enviarDesenho(event) {
 
     const publicUrl = urlData.publicUrl;
 
-    // Formata a data fornecida pelo usuário ou usa a data de hoje
     const dataDoDesenho = dataInput && dataInput.value 
       ? new Date(`${dataInput.value}T12:00:00`).toISOString()
       : new Date().toISOString();
 
-    // 3. Prepara o objeto com todos os campos para salvar na tabela 'Galeria de fotos'
     const dadosParaSalvar = {
       url_imagem: publicUrl,
       titulo: tituloInput?.value || arquivo.name,
@@ -453,7 +431,6 @@ async function enviarDesenho(event) {
       criado_em: dataDoDesenho
     };
 
-    // Envia os dados estruturados para o Banco
     const { error: dbError } = await supabaseClient
       .from('Galeria de fotos')
       .insert([dadosParaSalvar]);
@@ -473,30 +450,83 @@ async function enviarDesenho(event) {
   }
 }
 
+// Função de Deletar Registro e Arquivo do Supabase
+async function deletarDesenhoAtivo() {
+  if (!desenhoAtivoNoModal) return;
+
+  const confirmar = confirm(`Tem certeza que deseja excluir o desenho "${desenhoAtivoNoModal.titulo}" permanentemente?`);
+  if (!confirmar) return;
+
+  try {
+    const idParaDeletar = desenhoAtivoNoModal.id;
+    const urlImagem = desenhoAtivoNoModal.image_url;
+
+    let nomeArquivo = urlImagem.split('/').pop().split('?')[0];
+    nomeArquivo = decodeURIComponent(nomeArquivo);
+
+    if (nomeArquivo) {
+      const { error: storageError } = await supabaseClient
+        .storage
+        .from('desenhos')
+        .remove([nomeArquivo]);
+
+      if (storageError) {
+        console.warn("Aviso ao deletar arquivo do Storage:", storageError.message);
+      }
+    }
+
+    const { error: dbError } = await supabaseClient
+      .from('Galeria de fotos')
+      .delete()
+      .eq('id', idParaDeletar);
+
+    if (dbError) throw dbError;
+
+    alert("Desenho excluído com sucesso!");
+    
+    const modal = document.getElementById('foto-modal');
+    if (modal) {
+      modal.classList.add('closing');
+      setTimeout(() => {
+        modal.classList.remove('open', 'closing');
+      }, 350);
+    }
+    
+    desenhoAtivoNoModal = null;
+    carregarGaleria();
+
+  } catch (error) {
+    console.error("Erro ao deletar o desenho:", error);
+    alert(`Não foi possível excluir o desenho: ${error.message}`);
+  }
+}
+
 // ==========================================================================
 // 6. INICIALIZADOR DO SISTEMA
 // ==========================================================================
 window.addEventListener('DOMContentLoaded', () => {
-  // Recupera a última página para não resetar no F5
   const ultimaPagina = localStorage.getItem('ultima-pagina-caio') || 'page-home';
   showPage(ultimaPagina);
   
   carregarGaleria();
 
   const formUpload = document.getElementById('form-upload-inline');
-  const statusUpload = document.getElementById('status-upload-inline');
   const fileInput = document.getElementById('input-foto-inline');
 
   if (formUpload) formUpload.addEventListener('submit', enviarDesenho);
 
   if (fileInput) {
-    fileInput.addEventListener('change', () => {
-      atualizarPreviewImagem(fileInput.files?.[0], statusUpload);
-    });
+    fileInput.addEventListener('change', gerenciarSelecaoDeArquivo);
   }
 
   const orderSelect = document.getElementById('filter-order');
   orderSelect?.addEventListener('change', aplicarFiltro);
+
+  // Botão de Deletar no Modal
+  const btnExcluir = document.getElementById('btn-excluir-desenho');
+  if (btnExcluir) {
+    btnExcluir.addEventListener('click', deletarDesenhoAtivo);
+  }
 
   // Escuta para fechar o modal ao clicar no botão 'X' ou fora dele
   const fecharModal = document.getElementById('fechar-modal');
@@ -505,37 +535,34 @@ window.addEventListener('DOMContentLoaded', () => {
   function closeModalWithAnimation() {
     if (modal) {
       modal.classList.add('closing');
-      // Aguarda a animação terminar antes de remover a classe 'open'
       setTimeout(() => {
         modal.classList.remove('open', 'closing');
-      }, 350); // Duração da animação em ms
+      }, 350);
     }
   }
   
   if (fecharModal && modal) {
     fecharModal.addEventListener('click', closeModalWithAnimation);
     
-    // Fecha o modal ao clicar na área escura (fora da caixa de conteúdo)
     modal.addEventListener('click', (event) => {
       if (event.target === modal) {
         closeModalWithAnimation();
       }
     });
   }
-  // Lógica para o modo Tela Cheia da Imagem
+
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   const modalImg = document.getElementById('modal-img');
 
   if (fullscreenBtn && modalImg) {
     fullscreenBtn.addEventListener('click', (event) => {
-      event.stopPropagation(); // Evita fechar o modal por acidente
+      event.stopPropagation();
 
-      // Verifica se o navegador suporta a API de Fullscreen e ativa na imagem
       if (modalImg.requestFullscreen) {
         modalImg.requestFullscreen();
-      } else if (modalImg.webkitRequestFullscreen) { /* Safari / iOS */
+      } else if (modalImg.webkitRequestFullscreen) {
         modalImg.webkitRequestFullscreen();
-      } else if (modalImg.msRequestFullscreen) { /* IE11 */
+      } else if (modalImg.msRequestFullscreen) {
         modalImg.msRequestFullscreen();
       }
     });
