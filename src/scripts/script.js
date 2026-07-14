@@ -17,6 +17,45 @@ let likedIds = carregarCurtidas();
 let previewUrlAtual = null;
 let desenhoAtivoNoModal = null; // Guarda o desenho que está aberto no momento
 
+const fileInput = document.getElementById('seu-input-de-arquivo');
+
+fileInput.addEventListener('change', async (e) => {
+  let file = e.target.files[0];
+  if (!file) return;
+
+  // Verifica se a extensão é HEIC
+  if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
+    console.log("Detectado arquivo HEIC. Convertendo para JPEG...");
+    
+    try {
+      // Exibe um aviso visual para o usuário saber que está convertendo
+      const statusText = document.getElementById('status-upload'); // Ajuste com o seu ID de status
+      if (statusText) statusText.innerText = "Convertendo imagem HEIC...";
+
+      // Faz a mágica da conversão
+      const blobConvertido = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.8 // 80% de qualidade para o arquivo não ficar gigante
+      });
+
+      // Cria um novo arquivo baseado no blob convertido
+      const novoNome = file.name.replace(/\.[^/.]+$/, "") + ".jpeg";
+      file = new File([blobConvertido], novoNome, { type: "image/jpeg" });
+      
+      console.log("Conversão concluída com sucesso!");
+    } catch (error) {
+      console.error("Erro ao converter HEIC:", error);
+      alert("Não foi possível processar esta imagem HEIC. Tente usar PNG ou JPEG.");
+      return;
+    }
+  }
+
+  // A partir daqui, o seu código continua exatamente igual!
+  // A variável 'file' agora já é um JPEG prontinho para o preview e upload.
+  mostrarPreview(file); 
+});
+
 // ==========================================================================
 // 2. SISTEMA DE CURTIDAS (LOCALSTORAGE + BANCO)
 // ==========================================================================
