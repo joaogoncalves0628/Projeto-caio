@@ -216,15 +216,34 @@ function renderizarGaleria(container, desenhos) {
 
     item.addEventListener('click', () => {
       desenhoAtivoNoModal = desenho; 
-      if (modalImg) modalImg.src = desenho.image_url;
+      
+      // Abre o modal atribuindo os campos corretamente
+      if (modalImg) {
+        // MUITO IMPORTANTE: Garantir que estamos usando desenho.image_url aqui!
+        modalImg.src = desenho.image_url; 
+      }
+      
       if (modalTitulo) modalTitulo.innerText = desenho.titulo || 'Desenho sem título';
       if (modalDescricao) modalDescricao.innerText = desenho.descricao || 'Sem descrição disponível.';
+      
       if (modalData) {
         const dataFormatada = desenho.created_at
           ? new Date(desenho.created_at).toLocaleDateString('pt-BR')
           : '--/--/----';
-        modalData.innerText = `Postado em: ${dataFormatada}`;
+        modalData.innerText = dataFormatada;
       }
+      
+      // Reseta o estado dos botões ao abrir um novo modal
+      const btnEditar = document.getElementById('btn-editar-foto');
+      const btnSalvar = document.getElementById('btn-salvar-desenho');
+      const camposEditaveis = document.querySelectorAll('.modal-info .editavel');
+      
+      if (btnEditar && btnSalvar) {
+        btnEditar.classList.remove('hidden');
+        btnSalvar.classList.add('hidden');
+      }
+      camposEditaveis.forEach(campo => campo.setAttribute('contenteditable', 'false'));
+
       if (modal) modal.classList.add('open');
     });
 
@@ -289,7 +308,6 @@ function atualizarPreviewImagem(arquivo, statusElement) {
   if (statusElement) statusElement.textContent = `Imagem selecionada: ${arquivo.name}`;
 }
 
-// Escuta a seleção do arquivo, trata HEIC e gera o Preview
 async function gerenciarSelecaoDeArquivo(event) {
   const fileInput = event.target;
   const statusUpload = document.getElementById('status-upload-inline');
@@ -300,11 +318,9 @@ async function gerenciarSelecaoDeArquivo(event) {
     return;
   }
 
-  // Se for HEIC/HEIF, roda o conversor
   if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
     if (statusUpload) statusUpload.textContent = 'Convertendo imagem HEIC... Por favor, aguarde.';
     try {
-      // heic2any precisa estar importado no HTML
       const blobConvertido = await heic2any({
         blob: file,
         toType: "image/jpeg",
@@ -322,7 +338,6 @@ async function gerenciarSelecaoDeArquivo(event) {
     }
   }
 
-  // Guarda o arquivo final na variável global e atualiza o preview
   arquivoSelecionado = file;
   atualizarPreviewImagem(file, statusUpload);
 }
@@ -351,7 +366,7 @@ navButtons.forEach(button => {
 });
 
 // ==========================================================================
-// 5. OPERAÇÕES SUPABASE (BUSCAR, ENVIAR E EXCLUIR)
+// 5. OPERAÇÕES SUPABASE (BUSCAR, ENVIAR, EXCLUIR E ATUALIZAR)
 // ==========================================================================
 async function carregarGaleria() {
   const container = document.getElementById('galeria-fotos');
@@ -394,7 +409,6 @@ async function enviarDesenho(event) {
 
   if (!form || !status) return;
 
-  // Usa o arquivo selecionado previamente tratado (HEIC convertido ou padrão)
   const arquivo = arquivoSelecionado;
   if (!arquivo) {
     status.textContent = 'Seleciona uma imagem primeiro.';
@@ -450,7 +464,6 @@ async function enviarDesenho(event) {
   }
 }
 
-// Função de Deletar Registro e Arquivo do Supabase
 async function deletarDesenhoAtivo() {
   if (!desenhoAtivoNoModal) return;
 
@@ -461,8 +474,13 @@ async function deletarDesenhoAtivo() {
     const idParaDeletar = desenhoAtivoNoModal.id;
     const urlImagem = desenhoAtivoNoModal.image_url;
 
-    let nomeArquivo = urlImagem.split('/').pop().split('?')[0];
+    let nomeArquivo = urlImagem.substring(urlImagem.lastIndexOf('/') + 1);
+    if (nomeArquivo.includes('?')) {
+      nomeArquivo = nomeArquivo.split('?')[0];
+    }
     nomeArquivo = decodeURIComponent(nomeArquivo);
+
+    console.log("Tentando remover arquivo do Storage:", nomeArquivo);
 
     if (nomeArquivo) {
       const { error: storageError } = await supabaseClient
@@ -471,7 +489,7 @@ async function deletarDesenhoAtivo() {
         .remove([nomeArquivo]);
 
       if (storageError) {
-        console.warn("Aviso ao deletar arquivo do Storage:", storageError.message);
+        console.warn("Aviso ao deletar arquivo do Storage (o arquivo pode não existir mais):", storageError.message);
       }
     }
 
@@ -501,6 +519,58 @@ async function deletarDesenhoAtivo() {
   }
 }
 
+// Nova Função para Salvar Alterações de Título, Descrição e Data no Supabase
+async function salvarAlteracoesDoModal() {
+  if (!desenhoAtivoNoModal) return;
+
+  const novoTitulo = document.getElementById('modal-titulo').innerText.trim();
+  const novaDescricao = document.getElementById('modal-descricao').innerText.trim();
+  const novaDataTexto = document.getElementById('modal-data').innerText.trim();
+
+  // Converte a data de "DD/MM/AAAA" de volta para o formato ISO aceito pelo Supabase
+  let dataISO;
+  try {
+    const partes = novaDataTexto.split('/');
+    if (partes.length === 3) {
+      const dia = partes[0];
+      const mes = partes[1];
+      const ano = partes[2];
+      dataISO = new Date(`${ano}-${mes}-${dia}T12:00:00`).toISOString();
+    } else {
+      dataISO = new Date().toISOString();
+    }
+  } catch (e) {
+    dataISO = new Date().toISOString();
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('Galeria de fotos')
+      .update({
+        titulo: novoTitulo,
+        descricao: novaDescricao,
+        criado_em: dataISO
+      })
+      .eq('id', desenhoAtivoNoModal.id);
+
+    if (error) throw error;
+
+    alert("Alterações salvas com sucesso!");
+    
+    // Atualiza os dados localmente no objeto ativo
+    desenhoAtivoNoModal.titulo = novoTitulo;
+    desenhoAtivoNoModal.descricao = novaDescricao;
+    desenhoAtivoNoModal.created_at = dataISO;
+
+    // Recarrega a galeria ao fundo
+    carregarGaleria();
+
+  } catch (error) {
+    console.error("Erro ao atualizar dados no Supabase:", error);
+    alert("Erro ao salvar as edições: " + error.message);
+  }
+}
+
 // ==========================================================================
 // 6. INICIALIZADOR DO SISTEMA
 // ==========================================================================
@@ -514,21 +584,46 @@ window.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('input-foto-inline');
 
   if (formUpload) formUpload.addEventListener('submit', enviarDesenho);
-
-  if (fileInput) {
-    fileInput.addEventListener('change', gerenciarSelecaoDeArquivo);
-  }
+  if (fileInput) fileInput.addEventListener('change', gerenciarSelecaoDeArquivo);
 
   const orderSelect = document.getElementById('filter-order');
   orderSelect?.addEventListener('change', aplicarFiltro);
 
-  // Botão de Deletar no Modal
+  // Botões do Modal
   const btnExcluir = document.getElementById('btn-excluir-desenho');
   if (btnExcluir) {
     btnExcluir.addEventListener('click', deletarDesenhoAtivo);
   }
 
-  // Escuta para fechar o modal ao clicar no botão 'X' ou fora dele
+  const btnEditar = document.getElementById('btn-editar-foto');
+  const btnSalvar = document.getElementById('btn-salvar-desenho');
+  const camposEditaveis = document.querySelectorAll('.modal-info .editavel');
+
+  if (btnEditar) {
+    btnEditar.addEventListener('click', () => {
+      camposEditaveis.forEach(campo => {
+        campo.setAttribute('contenteditable', 'true');
+      });
+      if (camposEditaveis[0]) camposEditaveis[0].focus();
+      btnEditar.classList.add('hidden');
+      btnSalvar.classList.remove('hidden');
+    });
+  }
+
+  if (btnSalvar) {
+    btnSalvar.addEventListener('click', async () => {
+      camposEditaveis.forEach(campo => {
+        campo.setAttribute('contenteditable', 'false');
+      });
+      btnSalvar.classList.add('hidden');
+      btnEditar.classList.remove('hidden');
+      
+      // Envia as alterações para o Banco de Dados
+      await salvarAlteracoesDoModal();
+    });
+  }
+
+  // Escuta para fechar o modal
   const fecharModal = document.getElementById('fechar-modal');
   const modal = document.getElementById('foto-modal');
   
@@ -543,7 +638,6 @@ window.addEventListener('DOMContentLoaded', () => {
   
   if (fecharModal && modal) {
     fecharModal.addEventListener('click', closeModalWithAnimation);
-    
     modal.addEventListener('click', (event) => {
       if (event.target === modal) {
         closeModalWithAnimation();
@@ -557,7 +651,6 @@ window.addEventListener('DOMContentLoaded', () => {
   if (fullscreenBtn && modalImg) {
     fullscreenBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-
       if (modalImg.requestFullscreen) {
         modalImg.requestFullscreen();
       } else if (modalImg.webkitRequestFullscreen) {

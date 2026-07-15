@@ -2,6 +2,15 @@
    0. ICONES SVG (Paths do Flaticon)
    ========================================================================== */
 
+.e2edit {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--svg-stroke-width--1-5px, 1.5px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  d: path("M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z");
+}
+
 /* adicionar */
 .v4l00m {
   fill: currentColor;
@@ -152,10 +161,18 @@ body {
 
 
 .gallery-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  column-count: 2; /* Divide em duas colunas no mobile */
+  column-gap: 12px; /* Espaço lateral entre as colunas */
   padding: 20px 12px 0 12px;
+}
+
+/* Ajuste para desktops (telas maiores) */
+@media (min-width: 768px) {
+  .gallery-container {
+    column-count: 4; /* Divide em quatro colunas no PC */
+    column-gap: 20px;
+    padding: 40px 40px 0 40px;
+  }
 }
 
 .page {
@@ -300,27 +317,45 @@ body {
   line-height: 1.65;
 }
 
+/* Moldura do item totalmente transparente e sem bordas */
 .gallery-item {
-  display: flex;
-  flex-direction: column;
+  display: inline-block; /* Altera o comportamento de flex para bloco inline */
+  width: 100%; /* Garante que o item ocupe toda a largura da coluna */
+  margin-bottom: 12px; /* Cria o espaçamento vertical perfeito entre um card e outro */
   position: relative;
-  background: #18181c; 
+  background: transparent;
   border-radius: 12px;
-  padding-bottom: 12px; 
   overflow: hidden;
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
 .gallery-item:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(106, 41, 49, 0.3);
 }
 
+/* Imagem mantendo sua proporção original (9:16, etc.) e ocupando apenas o espaço real dela */
 .gallery-item img {
   width: 100%;
-  height: auto;
+  height: auto; /* MUDANÇA: Substituído o tamanho fixado pela proporção automática da foto */
   display: block;
-  box-shadow: 0 2px 8px #6A2931;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  object-fit: contain; 
+}
+
+/* Título flutuando diretamente abaixo da imagem */
+.gallery-item-title {
+  margin: 8px 0 0 0; /* Espaço apenas no topo, colado na imagem */
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #E7D8C3; /* Tom bege elegante */
+  text-align: left; /* Alinhado à esquerda */
+  
+  /* Evita que o texto quebre o layout caso seja muito comprido */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; 
 }
 
 .like-btn {
@@ -626,11 +661,6 @@ body {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-/* .nav-button:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 8px 20px rgba(106, 41, 49, 0.2);
-} */
-
 .nav-button:active {
   transform: scale(0.92);
 }
@@ -755,6 +785,30 @@ body {
 /* Classe de animação que será aplicada via JS */
 .like-btn.pop-animation {
   animation: heartPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Animação para fazer a imagem aparecer deslizando de leve */
+@keyframes imageSlideIn {
+  from {
+    transform: scale(0.95) translateX(10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Animação para sumir com a imagem na saída */
+@keyframes imageSlideOut {
+  from {
+    transform: scale(1) translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9) translateX(-10px);
+    opacity: 0;
+  }
 }
 
 /* Definição da animação de pulso */
@@ -989,17 +1043,6 @@ body {
   animation: imageSlideOut 0.35s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
 }
 
-@keyframes imageSlideIn {
-  from {
-    transform: scale(0.9) translateX(-10px);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1) translateX(0);
-    opacity: 1;
-  }
-}
-
 @keyframes imageSlideOut {
   from {
     transform: scale(1) translateX(0);
@@ -1057,6 +1100,28 @@ body {
   color: #888;
 }
 
+/* Garante que o hover na data editável fique bonito no modal */
+.modal-meta .editavel {
+  display: inline-block;
+  border: 1px dashed transparent;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #E7D8C3; /* Cor destacada para indicar que é editável */
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.modal-meta .editavel:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: #E7D8C3;
+  cursor: text;
+}
+
+.modal-meta .editavel:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: #8E3A45;
+  outline: none;
+}
+
 @media (min-width: 768px) {
   .modal-info {
     padding: 30px;
@@ -1079,11 +1144,40 @@ body {
   }
 }
 
-/* Botão de Excluir */
-.delete-btn {
-  background: rgba(255, 70, 70, 0.1);
-  color: #ff4646;
-  border: 1px solid rgba(255, 70, 70, 0.2);
+/* ==========================================================================
+   ADICIONADO: ESTILO DOS CAMPOS EDITÁVEIS (Apenas o visual de clique/hover)
+   ========================================================================== */
+.editavel {
+  transition: background-color 0.2s, border-color 0.2s;
+  border: 1px dashed transparent;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.editavel:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: #E7D8C3;
+  cursor: text;
+}
+
+.editavel:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: #8E3A45;
+  outline: none;
+}
+
+/* ==========================================================================
+   ADICIONADO: RODAPÉ DE BOTÕES DO MODAL (Excluir e Salvar)
+   ========================================================================== */
+.modal-actions-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: auto; /* Empurra os botões para o rodapé */
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.delete-btn, .save-btn {
   border-radius: 8px;
   padding: 10px 16px;
   font-size: 0.9rem;
@@ -1093,10 +1187,16 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: auto; /* Empurra o botão para o rodapé da seção de info */
-  margin-bottom: 20px;
   transition: background 0.2s, border-color 0.2s, transform 0.1s;
-  width: 100%;
+  flex: 1; /* Divide o espaço igualmente */
+}
+
+/* Botão de Excluir original */
+.delete-btn {
+  background: rgba(255, 70, 70, 0.1);
+  color: #ff4646;
+  border: 1px solid rgba(255, 70, 70, 0.2);
+  margin-top: 0; /* Removido o margin-top fixo para alinhar com o flex */
 }
 
 .delete-btn:hover {
@@ -1108,45 +1208,24 @@ body {
   transform: scale(0.98);
 }
 
-/* Moldura do item totalmente transparente e sem bordas */
-.gallery-item {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  background: transparent; /* Remove o fundo escuro */
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+/* Botão de Salvar */
+.save-btn {
+  background: rgba(142, 58, 69, 0.2);
+  color: #E7D8C3;
+  border: 1px solid rgba(142, 58, 69, 0.4);
 }
 
-/* Efeito sutil de flutuar ao passar o mouse */
-.gallery-item:hover {
-  transform: translateY(-4px);
+.save-btn:hover {
+  background: rgba(142, 58, 69, 0.5);
+  border-color: #E7D8C3;
 }
 
-/* Imagem com cantos totalmente arredondados */
-.gallery-item img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  display: block;
-  border-radius: 12px; /* Arredonda todos os 4 cantos da imagem */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Sombra suave para dar profundidade */
+.save-btn:active {
+  transform: scale(0.98);
 }
 
-/* Título flutuando diretamente abaixo da imagem */
-.gallery-item-title {
-  margin: 8px 0 0 0; /* Espaço apenas no topo, colado na imagem */
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #E7D8C3; /* Tom bege elegante */
-  text-align: left; /* Alinhado à esquerda (mude para 'center' se preferir centralizado) */
-  
-  /* Evita que o texto quebre o layout caso seja muito comprido */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; 
+.hidden {
+  display: none !important;
 }
 
 /* ==========================================================================

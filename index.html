@@ -12,40 +12,63 @@
     <h3 id="Card-boasVindas"> ♡ Projeto em conjunto do melhor casal rsrs</h3>
 
     <div id="foto-modal" class="modal">
-  <div class="modal-content">
-    
-    <button id="fechar-modal" class="modal-close" aria-label="Fechar modal">&times;</button>
-    
-    <div class="modal-media">
-      <button id="fullscreen-btn" class="fullscreen-btn" aria-label="Ver em tela cheia">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-        </svg>
-      </button>
-      <img id="modal-img" src="" alt="Desenho Ampliado">
-    </div>
-    
-    <div class="modal-info">
-      <h2 id="modal-titulo">Título do Desenho</h2>
-      <p id="modal-descricao">Carregando descrição...</p>
-      
-      <button id="btn-excluir-desenho" class="delete-btn" aria-label="Excluir este desenho">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          <line x1="10" y1="11" x2="10" y2="17"></line>
-          <line x1="14" y1="11" x2="14" y2="17"></line>
-        </svg>
-        Excluir Desenho
-      </button>
+        <div class="modal-content">
+            
+            <button id="fechar-modal" class="modal-close" aria-label="Fechar modal">&times;</button>
+            
+            <div class="modal-media">
+                <button id="fullscreen-btn" class="fullscreen-btn" aria-label="Ver em tela cheia">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                </button>
+                <img id="modal-img" src="" alt="Desenho Ampliado">
+            </div>
+            
+            <div class="modal-info">
+                <h2 id="modal-titulo" class="editavel">Título do Desenho</h2>
+                <p id="modal-descricao" class="editavel">Carregando descrição...</p>
+                
+                <div class="modal-actions-footer">
+                    <button id="btn-editar-foto" class="save-btn">
+                        <div class="nav-icon-wrapper">
+                            <svg class="nav-icon-svg" viewBox="0 0 24 24">
+                                <path class="e2edit" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path>
+                            </svg>
+                        </div>
+                        Editar
+                    </button>
 
-      <div class="modal-meta">
-        <span id="modal-data">Postado em: --/--/----</span>
-      </div>
-    </div>
+                    <button id="btn-salvar-desenho" class="save-btn hidden">
+                        <div class="nav-icon-wrapper">
+                            <svg class="nav-icon-svg" viewBox="0 0 24 24">
+                                <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"></path>
+                            </svg>
+                        </div>
+                        Salvar
+                    </button>
 
-  </div>
-</div>
+                    <button id="btn-excluir-desenho" class="delete-btn" aria-label="Excluir este desenho">
+                        <div class="nav-icon-wrapper">
+                            <svg class="nav-icon-svg" viewBox="0 0 24 24">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </div>
+                        Excluir
+                    </button>
+                </div>
+
+                <div class="modal-meta">
+                    <span>Postado em: </span>
+                    <span id="modal-data" class="editavel">--/--/----</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <main id="pages">
         <section class="page active" id="page-home">
